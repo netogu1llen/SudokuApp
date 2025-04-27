@@ -1,5 +1,5 @@
 # Sudoku App
-#Ernesto Guillén Guerrero A01704967
+## Ernesto Guillén Guerrero A01704967
 
 Una aplicación moderna de Sudoku para Android, construida con Jetpack Compose, siguiendo el patrón de arquitectura MVVM y los principios de Clean Architecture.
 
