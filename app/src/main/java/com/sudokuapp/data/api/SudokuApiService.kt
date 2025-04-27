@@ -6,7 +6,7 @@ import retrofit2.http.Header
 import retrofit2.http.Query
 
 interface SudokuApiService {
-    @GET("v1/sudoku")
+    @GET("v1/sudokugenerate")
     suspend fun generateSudoku(
         @Header("X-Api-Key") apiKey: String,
         @Query("difficulty") difficulty: String,

@@ -1,9 +1,11 @@
 package com.sudokuapp.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,30 +51,36 @@ fun SudokuCellComponent(
         modifier = modifier
             .aspectRatio(1f)
             .clip(MaterialTheme.shapes.extraSmall)
+            .background(backgroundColor)
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
                 color = borderColor,
                 shape = MaterialTheme.shapes.extraSmall
             )
             .clickable(enabled = !cell.isOriginal) { onCellClick(cell) }
-            .padding(1.dp)
+            .padding(2.dp)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(1.dp),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             if (cell.value != null) {
+                // Adaptar el tamaño del texto según el valor
+                val fontSize = when {
+                    cell.value < 10 -> 18.sp // Para números de un dígito (1-9)
+                    else -> 14.sp // Para números de dos dígitos (10-16)
+                }
+
                 Text(
                     text = cell.value.toString(),
                     color = textColor,
-                    fontSize = 20.sp,
+                    fontSize = fontSize,
                     fontWeight = if (cell.isOriginal) FontWeight.Bold else FontWeight.Normal,
                     textAlign = TextAlign.Center
                 )
             } else if (cell.notes.isNotEmpty()) {
-                NotesGrid(notes = cell.notes, maxNumber = 9)
+                NotesGrid(notes = cell.notes, maxNumber = 16) // Soporta hasta 16x16
             }
         }
     }
@@ -92,7 +99,7 @@ fun NotesGrid(notes: Set<Int>, maxNumber: Int) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         for (row in 0 until rowCount) {
-            androidx.compose.foundation.layout.Row(
+            Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -106,9 +113,15 @@ fun NotesGrid(notes: Set<Int>, maxNumber: Int) {
                             contentAlignment = Alignment.Center
                         ) {
                             if (notes.contains(number)) {
+                                // Tamaño de texto más pequeño para las notas
+                                val fontSize = when {
+                                    maxNumber <= 9 -> 8.sp
+                                    else -> 6.sp
+                                }
+
                                 Text(
                                     text = number.toString(),
-                                    fontSize = 8.sp,
+                                    fontSize = fontSize,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }

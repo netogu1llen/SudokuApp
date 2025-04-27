@@ -2,8 +2,7 @@ package com.sudokuapp.domain.model
 
 enum class SudokuSize(val dimension: Int) {
     SMALL(4),
-    STANDARD(9),
-    LARGE(16)
+    STANDARD(9)
 }
 
 enum class SudokuDifficulty(val apiValue: String) {
@@ -62,7 +61,6 @@ fun Sudoku.checkCellValidity(row: Int, col: Int): Boolean {
     val boxSize = when (size) {
         SudokuSize.SMALL -> 2
         SudokuSize.STANDARD -> 3
-        SudokuSize.LARGE -> 4
     }
 
     val boxStartRow = (row / boxSize) * boxSize

@@ -1,6 +1,5 @@
 package com.sudokuapp.presentation.screens.home
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sudokuapp.domain.model.Sudoku

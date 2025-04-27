@@ -29,6 +29,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,7 +74,11 @@ fun HomeScreen(
                     IconButton(onClick = { viewModel.loadSavedGames() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
         }
     ) { paddingValues ->
@@ -117,13 +122,12 @@ fun HomeScreen(
                             val sizeText = when(size) {
                                 SudokuSize.SMALL -> "Small (4x4)"
                                 SudokuSize.STANDARD -> "Standard (9x9)"
-                                SudokuSize.LARGE -> "Large (16x16)"
                             }
 
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(56.dp)
+                                    .height(48.dp)
                                     .selectable(
                                         selected = (size == selectedSize),
                                         onClick = { selectedSize = size },
@@ -164,7 +168,7 @@ fun HomeScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(56.dp)
+                                    .height(48.dp)
                                     .selectable(
                                         selected = (difficulty == selectedDifficulty),
                                         onClick = { selectedDifficulty = difficulty },

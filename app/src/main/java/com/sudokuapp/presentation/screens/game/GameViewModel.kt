@@ -12,19 +12,20 @@ import com.sudokuapp.domain.usecase.GetSavedGamesUseCase
 import com.sudokuapp.domain.usecase.SaveGameUseCase
 import com.sudokuapp.domain.usecase.VerifySolutionUseCase
 import com.sudokuapp.presentation.util.UiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
+import javax.inject.Inject
 
-
-class GameViewModel(
+@HiltViewModel
+class GameViewModel @Inject constructor(
     private val generateSudokuUseCase: GenerateSudokuUseCase,
     private val getSavedGamesUseCase: GetSavedGamesUseCase,
     private val saveGameUseCase: SaveGameUseCase,
     private val verifySolutionUseCase: VerifySolutionUseCase,
-    savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _sudokuState = MutableStateFlow<UiState<Sudoku>>(UiState.Loading)
@@ -38,6 +39,9 @@ class GameViewModel(
 
     private val _isGameSaved = MutableStateFlow(false)
     val isGameSaved: StateFlow<Boolean> = _isGameSaved.asStateFlow()
+
+    private val _isNoteMode = MutableStateFlow(false)
+    val isNoteMode: StateFlow<Boolean> = _isNoteMode.asStateFlow()
 
     init {
         val gameId = savedStateHandle.get<String>("gameId")
@@ -107,7 +111,8 @@ class GameViewModel(
             colIndex = colIndex,
             value = sudoku.currentState[rowIndex][colIndex],
             isOriginal = false,
-            isValid = verifySolutionUseCase.verifyCellValidity(sudoku, rowIndex, colIndex)
+            isValid = verifySolutionUseCase.verifyCellValidity(sudoku, rowIndex, colIndex),
+            notes = emptySet() // Get actual notes if implemented
         )
 
         _selectedCell.value = cell
@@ -185,6 +190,10 @@ class GameViewModel(
         }
     }
 
+    fun toggleNoteMode() {
+        _isNoteMode.value = !_isNoteMode.value
+    }
+
     fun toggleNote(number: Int) {
         val cell = _selectedCell.value ?: return
         val currentState = _sudokuState.value
@@ -202,5 +211,20 @@ class GameViewModel(
         }
 
         _selectedCell.value = cell.copy(notes = notes)
+    }
+
+    fun verifySolution() {
+        val currentState = _sudokuState.value
+        if (currentState !is UiState.Success) return
+
+        val sudoku = currentState.data
+        val isSolved = verifySolutionUseCase(sudoku)
+        _isSolved.value = isSolved
+
+        if (isSolved) {
+            viewModelScope.launch {
+                saveGameUseCase.updateGameState(sudoku.id, sudoku.currentState, true)
+            }
+        }
     }
 }

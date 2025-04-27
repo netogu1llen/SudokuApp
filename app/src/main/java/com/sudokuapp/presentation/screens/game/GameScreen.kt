@@ -27,6 +27,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,8 +59,8 @@ fun GameScreen(
     val selectedCell by viewModel.selectedCell.collectAsState()
     val isSolved by viewModel.isSolved.collectAsState()
     val isGameSaved by viewModel.isGameSaved.collectAsState()
+    val isNoteMode by viewModel.isNoteMode.collectAsState()
 
-    var isNoteMode by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(isSolved) {
@@ -83,11 +84,11 @@ fun GameScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { isNoteMode = !isNoteMode }) {
+                    IconButton(onClick = { viewModel.toggleNoteMode() }) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Toggle Notes",
-                            tint = if (isNoteMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            tint = if (isNoteMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = { viewModel.resetGame() }) {
@@ -98,7 +99,11 @@ fun GameScreen(
                             Icon(Icons.Default.Save, contentDescription = "Save")
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -124,14 +129,15 @@ fun GameScreen(
                         onCellClick = { row, col -> viewModel.selectCell(row, col) },
                         onNumberClick = { number -> viewModel.setValueForSelectedCell(number) },
                         onClearClick = { viewModel.setValueForSelectedCell(null) },
-                        onNoteClick = { number -> viewModel.toggleNote(number) }
+                        onNoteClick = { number -> viewModel.toggleNote(number) },
+                        onVerifyClick = { viewModel.verifySolution() }
                     )
                 }
                 is UiState.Error -> {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .padding(4.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -159,86 +165,104 @@ fun GameContent(
     onCellClick: (Int, Int) -> Unit,
     onNumberClick: (Int) -> Unit,
     onClearClick: () -> Unit,
-    onNoteClick: (Int) -> Unit
+    onNoteClick: (Int) -> Unit,
+    onVerifyClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Game info
-        Card(
+        // Información compacta del juego
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
+                .fillMaxWidth(0.9f)
+                .padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Size: ${sudoku.size.dimension}x${sudoku.size.dimension}",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
                     text = "Difficulty: ${sudoku.difficulty.name.lowercase().capitalize()}",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = "Created: ${formatDate(sudoku.timestamp)}",
-                    style = MaterialTheme.typography.bodySmall
-                )
+            }
+
+            if (isSolved) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Done,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Solved!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
             }
         }
 
-        // Sudoku board
+        // Sudoku board - dar suficiente espacio
         SudokuBoard(
             sudoku = sudoku,
             selectedCell = selectedCell,
             onCellClick = onCellClick,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.85f)
                 .weight(1f)
-                .padding(8.dp)
+                .padding(vertical = 4.dp)
         )
 
-        // Completed indicator
-        if (isSolved) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Done,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Puzzle Completed!",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
+        // Mensaje de ayuda para modo de notas
+        if (isNoteMode) {
+            Text(
+                text = "Note Mode: On",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
 
-        // Number pad
+        // Botón de verificación
+        Button(
+            onClick = onVerifyClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Done,
+                contentDescription = "Verify Solution",
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Text("Verify Solution")
+        }
+
+        // Number pad - tamaño adecuado
         NumberPad(
             sudokuSize = sudoku.size,
             onNumberClick = onNumberClick,
             onClearClick = onClearClick,
             onNoteClick = onNoteClick,
-            isNoteMode = isNoteMode
+            isNoteMode = isNoteMode,
+            modifier = Modifier.fillMaxWidth(0.85f)
+                .padding(top=8.dp)
         )
     }
 }
 
-private fun formatDate(timestamp: Long): String {
-    val date = Date(timestamp)
-    val format = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
-    return format.format(date)
+private fun String.capitalize(): String {
+    return if (this.isEmpty()) this else this.replaceFirstChar { it.uppercase() }
 }

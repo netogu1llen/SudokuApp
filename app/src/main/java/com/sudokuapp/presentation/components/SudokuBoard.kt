@@ -29,15 +29,19 @@ fun SudokuBoard(
     val boxSize = when (sudoku.size) {
         SudokuSize.SMALL -> 2
         SudokuSize.STANDARD -> 3
-        SudokuSize.LARGE -> 4
     }
+
+    // Grosor de los bordes
+    val thinBorder = 0.5.dp
+    val thickBorder = 2.dp
 
     Column(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxWidth(0.9f)
             .aspectRatio(1f)
-            .border(2.dp, MaterialTheme.colorScheme.outline)
+            .border(thickBorder, MaterialTheme.colorScheme.outline)
             .background(MaterialTheme.colorScheme.background)
+            .padding(2.dp)
     ) {
         for (rowIndex in 0 until dimension) {
             Row(
@@ -49,6 +53,11 @@ fun SudokuBoard(
                     val cell = sudoku.getCell(rowIndex, colIndex)
                     val isSelected = selectedCell?.rowIndex == rowIndex && selectedCell.colIndex == colIndex
 
+                    // Determinar si la celda está en un borde
+                    val isRightBorderThick = (colIndex + 1) % boxSize == 0 && colIndex < dimension - 1
+                    val isBottomBorderThick = (rowIndex + 1) % boxSize == 0 && rowIndex < dimension - 1
+
+                    // Determinar color de fondo alternado para las cajas
                     val boxRow = rowIndex / boxSize
                     val boxCol = colIndex / boxSize
                     val boxIndex = boxRow * boxSize + boxCol
@@ -63,7 +72,24 @@ fun SudokuBoard(
                     Box(
                         modifier = Modifier
                             .weight(1f)
+                            .aspectRatio(1f)
                             .background(boxBackground)
+                            // Añadir bordes para una mejor separación visual
+                            .border(
+                                width = if (isRightBorderThick) thickBorder else thinBorder,
+                                color = MaterialTheme.colorScheme.outline.copy(
+                                    alpha = if (isRightBorderThick) 0.7f else 0.3f
+                                ),
+                                shape = MaterialTheme.shapes.extraSmall
+                            )
+                            .border(
+                                width = if (isBottomBorderThick) thickBorder else thinBorder,
+                                color = MaterialTheme.colorScheme.outline.copy(
+                                    alpha = if (isBottomBorderThick) 0.7f else 0.3f
+                                ),
+                                shape = MaterialTheme.shapes.extraSmall
+                            )
+                            .padding(1.dp)
                     ) {
                         SudokuCellComponent(
                             cell = cell,
@@ -71,7 +97,7 @@ fun SudokuBoard(
                             onCellClick = { onCellClick(rowIndex, colIndex) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(1.dp)
+                                .aspectRatio(1f)
                         )
                     }
                 }
