@@ -100,11 +100,19 @@ class GameViewModel @Inject constructor(
                 result.onSuccess { sudoku ->
                     _sudokuState.value = UiState.Success(sudoku)
                     _isGameSaved.value = true
+
+                    // Si el tamaño es SMALL (4x4) y la dificultad es HARD, mostramos un mensaje
+                    // porque sabemos que la API tiene problemas con esta combinación
+                    if (size == SudokuSize.SMALL && difficulty == SudokuDifficulty.HARD) {
+                        _uiEvent.emit(GameEvent.ShowMessage("Se ha generado un sudoku localmente debido a limitaciones de la API con sudokus 4x4 difíciles."))
+                    }
                 }.onFailure { error ->
                     _sudokuState.value = UiState.Error(error.message ?: "Failed to generate sudoku")
+                    _uiEvent.emit(GameEvent.ShowMessage("Error al generar sudoku: ${error.message}"))
                 }
             } catch (e: Exception) {
                 _sudokuState.value = UiState.Error(e.message ?: "Unknown error")
+                _uiEvent.emit(GameEvent.ShowMessage("Error: ${e.message}"))
             }
         }
     }
@@ -255,18 +263,63 @@ class GameViewModel @Inject constructor(
                     if (verification.isValid) {
                         _isSolved.value = true
                         saveGameUseCase.updateGameState(sudoku.id, sudoku.currentState, true)
-                        _uiEvent.emit(GameEvent.ShowMessage("¡Felicidades! Tu solución coincide con la solución proporcionada por la API."))
+
+                        // Mensaje diferente dependiendo de si usamos la API o fallback local
+                        if (verification.solution == sudoku.solution) {
+                            _uiEvent.emit(GameEvent.ShowMessage("¡Felicidades! Tu solución es correcta. (Verificación local)"))
+                        } else {
+                            _uiEvent.emit(GameEvent.ShowMessage("¡Felicidades! Tu solución coincide con la proporcionada por la API."))
+                        }
                     } else {
-                        _uiEvent.emit(GameEvent.ShowMessage("Tu solución no coincide con la de la API. ${verification.errorMessage ?: ""}"))
+                        _uiEvent.emit(GameEvent.ShowMessage("Tu solución no es correcta. ${verification.errorMessage ?: ""}"))
                     }
                 }.onFailure { error ->
                     _verificationResult.value = UiState.Error(error.message ?: "Error en la verificación")
-                    _uiEvent.emit(GameEvent.ShowMessage("Error al verificar con la API: ${error.message}"))
+                    _uiEvent.emit(GameEvent.ShowMessage("Error al verificar con la API: ${error.message}. Se usará verificación local."))
+
+                    // Verificar localmente como fallback
+                    verifyLocally(sudoku)
                 }
             } catch (e: Exception) {
                 _verificationResult.value = UiState.Error(e.message ?: "Error desconocido")
-                _uiEvent.emit(GameEvent.ShowMessage("Error al verificar con la API: ${e.message}"))
+                _uiEvent.emit(GameEvent.ShowMessage("Error al verificar con la API: ${e.message}. Se usará verificación local."))
+
+                // Verificar localmente como fallback
+                verifyLocally(sudoku)
             }
+        }
+    }
+
+    private fun verifyLocally(sudoku: Sudoku) {
+        viewModelScope.launch {
+            // Verificar contra la solución guardada
+            var isCorrect = true
+            for (i in sudoku.currentState.indices) {
+                for (j in sudoku.currentState[i].indices) {
+                    if (sudoku.currentState[i][j] != sudoku.solution[i][j]) {
+                        isCorrect = false
+                        break
+                    }
+                }
+                if (!isCorrect) break
+            }
+
+            if (isCorrect) {
+                _isSolved.value = true
+                saveGameUseCase.updateGameState(sudoku.id, sudoku.currentState, true)
+                _uiEvent.emit(GameEvent.ShowMessage("¡Felicidades! Tu solución es correcta. (Verificación local)"))
+            } else {
+                _uiEvent.emit(GameEvent.ShowMessage("Tu solución no coincide con la solución correcta. (Verificación local)"))
+            }
+
+            // Actualizar el estado de verificación
+            _verificationResult.value = UiState.Success(
+                VerificationResult(
+                    isValid = isCorrect,
+                    solution = sudoku.solution,
+                    errorMessage = if (isCorrect) null else "La solución no es correcta."
+                )
+            )
         }
     }
 }
