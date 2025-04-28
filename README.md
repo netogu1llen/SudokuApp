@@ -29,19 +29,13 @@ Esta aplicación sigue el enfoque de Clean Architecture con el patrón MVVM (Mod
 - **Modelo**: Modelos de dominio que representan los rompecabezas de Sudoku y el estado del juego
 - **Vista**: Componentes UI de Jetpack Compose
 - **ViewModel**: Gestiona el estado de la UI y la lógica de negocios
-- **Repositorio**: Fuente única de verdad que coordina los datos desde la API y la base de datos local
-
+- 
 ## Tecnología
 
 - **Kotlin**: Lenguaje de programación principal
 - **Jetpack Compose**: Kit de herramientas moderno para construir UI nativas
-- **Coroutines & Flow**: Para programación asíncrona
 - **Hilt**: Inyección de dependencias
-- **Room**: Base de datos local para la persistencia del juego
-- **Retrofit**: Para solicitudes de red a la API de Sudoku
 - **Navigation Compose**: Para la navegación entre pantallas
-- **Material3**: Para la implementación del sistema de diseño
-
 
 ## Integración con la API
 
@@ -60,6 +54,4 @@ La aplicación se integra con la API Ninjas Sudoku API para generar los rompecab
 3. Ejecuta la aplicación en un emulador o dispositivo físico
 
 
-## Licencia
-
-Este proyecto es de código abierto y está disponible bajo la Licencia MIT.
+MIT
