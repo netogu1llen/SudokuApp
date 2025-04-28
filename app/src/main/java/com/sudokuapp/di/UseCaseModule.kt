@@ -5,6 +5,7 @@ import com.sudokuapp.domain.usecase.GenerateSudokuUseCase
 import com.sudokuapp.domain.usecase.GetSavedGamesUseCase
 import com.sudokuapp.domain.usecase.SaveGameUseCase
 import com.sudokuapp.domain.usecase.VerifySolutionUseCase
+import com.sudokuapp.domain.usecase.VerifySudokuWithApiUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,5 +38,11 @@ object UseCaseModule {
     @Singleton
     fun provideVerifySolutionUseCase(): VerifySolutionUseCase {
         return VerifySolutionUseCase()
+    }
+
+    @Provides
+    @Singleton
+    fun provideVerifySudokuWithApiUseCase(repository: SudokuRepository): VerifySudokuWithApiUseCase {
+        return VerifySudokuWithApiUseCase(repository)
     }
 }
