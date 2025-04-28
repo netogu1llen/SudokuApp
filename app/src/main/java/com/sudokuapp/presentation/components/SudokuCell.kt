@@ -53,12 +53,12 @@ fun SudokuCellComponent(
             .clip(MaterialTheme.shapes.extraSmall)
             .background(backgroundColor)
             .border(
-                width = if (isSelected) 2.dp else 1.dp,
+                width = if (isSelected) 1.5.dp else 0.5.dp,
                 color = borderColor,
                 shape = MaterialTheme.shapes.extraSmall
             )
             .clickable(enabled = !cell.isOriginal) { onCellClick(cell) }
-            .padding(2.dp)
+            .padding(1.dp)
     ) {
         Box(
             modifier = Modifier
@@ -68,8 +68,8 @@ fun SudokuCellComponent(
             if (cell.value != null) {
                 // Adaptar el tamaño del texto según el valor
                 val fontSize = when {
-                    cell.value < 10 -> 18.sp // Para números de un dígito (1-9)
-                    else -> 14.sp // Para números de dos dígitos (10-16)
+                    cell.value < 10 -> 14.sp  // Reducido de 18.sp para números de un dígito (1-9)
+                    else -> 11.sp  // Reducido de 14.sp para números de dos dígitos (10-16)
                 }
 
                 Text(
@@ -115,8 +115,8 @@ fun NotesGrid(notes: Set<Int>, maxNumber: Int) {
                             if (notes.contains(number)) {
                                 // Tamaño de texto más pequeño para las notas
                                 val fontSize = when {
-                                    maxNumber <= 9 -> 8.sp
-                                    else -> 6.sp
+                                    maxNumber <= 9 -> 6.sp  // Reducido de 8.sp
+                                    else -> 5.sp  // Reducido de 6.sp
                                 }
 
                                 Text(

@@ -1,13 +1,13 @@
-
-
 package com.sudokuapp.data.repository
 
 import com.sudokuapp.data.api.SudokuApiService
 import com.sudokuapp.data.cache.dao.SudokuDao
 import com.sudokuapp.data.cache.entity.SudokuEntity
+import com.sudokuapp.data.model.SudokuVerificationRequest
 import com.sudokuapp.domain.model.Sudoku
 import com.sudokuapp.domain.model.SudokuDifficulty
 import com.sudokuapp.domain.model.SudokuSize
+import com.sudokuapp.domain.model.VerificationResult
 import com.sudokuapp.domain.repository.SudokuRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -48,6 +48,70 @@ class SudokuRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun verifySudokuWithApi(sudoku: Sudoku): Result<VerificationResult> {
+        return try {
+            // Enviar el puzzle original (no la solución del usuario) para que la API lo resuelva
+            val request = SudokuVerificationRequest(board = sudoku.puzzle)
+
+            // Llamamos a la API para resolver el puzzle original
+            val response = apiService.verifySudokuSolution(apiKey, request)
+
+            // Verificamos si la solución de la API es resoluble
+            val isResolvable = response.solvable
+
+            if (!isResolvable) {
+                return Result.success(
+                    VerificationResult(
+                        isValid = false,
+                        solution = null,
+                        errorMessage = "La API indica que el puzzle no tiene solución."
+                    )
+                )
+            }
+
+            // Comparamos la solución del usuario con la solución de la API
+            val userSolution = sudoku.currentState
+            val apiSolution = response.solution
+
+            val isCorrect = isUserSolutionCorrect(userSolution, apiSolution)
+
+            val result = VerificationResult(
+                isValid = isCorrect,
+                solution = apiSolution,
+                errorMessage = if (isCorrect) null else "Tu solución no coincide con la solución de la API."
+            )
+
+            // Si es correcto, actualizamos el estado del sudoku
+            if (isCorrect) {
+                updateSudokuState(sudoku.id, sudoku.currentState, true)
+            }
+
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun isUserSolutionCorrect(userSolution: List<List<Int?>>, apiSolution: List<List<Int>>): Boolean {
+        // Verificamos que estén completos
+        for (row in userSolution) {
+            for (cell in row) {
+                if (cell == null) return false
+            }
+        }
+
+        // Comparamos cada celda
+        for (i in userSolution.indices) {
+            for (j in userSolution[i].indices) {
+                if (userSolution[i][j] != apiSolution[i][j]) {
+                    return false
+                }
+            }
+        }
+
+        return true
     }
 
     override suspend fun saveSudoku(sudoku: Sudoku) {
