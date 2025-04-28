@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,22 +31,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sudokuapp.domain.model.Sudoku
 import com.sudokuapp.domain.model.SudokuCell
 import com.sudokuapp.presentation.components.NumberPad
 import com.sudokuapp.presentation.components.SudokuBoard
 import com.sudokuapp.presentation.util.UiState
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,12 +54,24 @@ fun GameScreen(
     val isSolved by viewModel.isSolved.collectAsState()
     val isGameSaved by viewModel.isGameSaved.collectAsState()
     val isNoteMode by viewModel.isNoteMode.collectAsState()
+    val verificationResult by viewModel.verificationResult.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Eventos de juego (mensajes)
+    LaunchedEffect(key1 = true) {
+        viewModel.uiEvent.collectLatest { event ->
+            when (event) {
+                is GameEvent.ShowMessage -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
+
     LaunchedEffect(isSolved) {
         if (isSolved) {
-            snackbarHostState.showSnackbar("Congratulations! You solved the puzzle!")
+            snackbarHostState.showSnackbar("¡Felicidades! Has resuelto el puzzle correctamente.")
         }
     }
 
@@ -121,17 +127,35 @@ fun GameScreen(
                 }
                 is UiState.Success -> {
                     val sudoku = (sudokuState as UiState.Success<Sudoku>).data
-                    GameContent(
-                        sudoku = sudoku,
-                        selectedCell = selectedCell,
-                        isNoteMode = isNoteMode,
-                        isSolved = isSolved,
-                        onCellClick = { row, col -> viewModel.selectCell(row, col) },
-                        onNumberClick = { number -> viewModel.setValueForSelectedCell(number) },
-                        onClearClick = { viewModel.setValueForSelectedCell(null) },
-                        onNoteClick = { number -> viewModel.toggleNote(number) },
-                        onVerifyClick = { viewModel.verifySolution() }
-                    )
+
+                    // Mostrar indicador de carga durante la verificación de la API
+                    if (verificationResult is UiState.Loading) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                CircularProgressIndicator()
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Verificando la solución con la API...")
+                            }
+                        }
+                    } else {
+                        GameContent(
+                            sudoku = sudoku,
+                            selectedCell = selectedCell,
+                            isNoteMode = isNoteMode,
+                            isSolved = isSolved,
+                            onCellClick = { row, col -> viewModel.selectCell(row, col) },
+                            onNumberClick = { number -> viewModel.setValueForSelectedCell(number) },
+                            onClearClick = { viewModel.setValueForSelectedCell(null) },
+                            onNoteClick = { number -> viewModel.toggleNote(number) },
+                            onVerifyClick = { viewModel.verifySolution() }
+                        )
+                    }
                 }
                 is UiState.Error -> {
                     Column(
@@ -171,14 +195,14 @@ fun GameContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(4.dp),  // Reducido de 8.dp
+        verticalArrangement = Arrangement.spacedBy(4.dp)  // Reducido de 8.dp
     ) {
         // Información compacta del juego
         Row(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(bottom = 4.dp),
+                .fillMaxWidth()
+                .padding(bottom = 2.dp),  // Reducido de 4.dp
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -196,7 +220,7 @@ fun GameContent(
             if (isSolved) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.padding(start = 4.dp)  // Reducido de 8.dp
                 ) {
                     Icon(
                         imageVector = Icons.Default.Done,
@@ -214,15 +238,15 @@ fun GameContent(
             }
         }
 
-        // Sudoku board - dar suficiente espacio
+        // Sudoku board - ocupando menos espacio vertical
         SudokuBoard(
             sudoku = sudoku,
             selectedCell = selectedCell,
             onCellClick = onCellClick,
             modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .weight(1f)
-                .padding(vertical = 4.dp)
+                .fillMaxWidth()
+                .weight(0.5f)  // Reducido de 1f para que ocupe menos espacio vertical
+                .padding(vertical = 2.dp)  // Reducido de 4.dp
         )
 
         // Mensaje de ayuda para modo de notas
@@ -240,14 +264,14 @@ fun GameContent(
             onClick = onVerifyClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
+                .padding(vertical = 2.dp)  // Reducido de 4.dp
         ) {
             Icon(
                 imageVector = Icons.Default.Done,
-                contentDescription = "Verify Solution",
-                modifier = Modifier.padding(end = 8.dp)
+                contentDescription = "Verificar Solución con API",
+                modifier = Modifier.padding(end = 4.dp)  // Reducido de 8.dp
             )
-            Text("Verify Solution")
+            Text("Verificar Solución con API")
         }
 
         // Number pad - tamaño adecuado
@@ -257,8 +281,9 @@ fun GameContent(
             onClearClick = onClearClick,
             onNoteClick = onNoteClick,
             isNoteMode = isNoteMode,
-            modifier = Modifier.fillMaxWidth(0.85f)
-                .padding(top=8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)  // Reducido de 8.dp
         )
     }
 }

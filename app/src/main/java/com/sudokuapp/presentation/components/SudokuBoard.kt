@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sudokuapp.domain.model.Sudoku
 import com.sudokuapp.domain.model.SudokuCell
@@ -33,15 +32,15 @@ fun SudokuBoard(
 
     // Grosor de los bordes
     val thinBorder = 0.5.dp
-    val thickBorder = 2.dp
+    val thickBorder = 1.5.dp
 
     Column(
         modifier = modifier
-            .fillMaxWidth(0.9f)
+            .fillMaxWidth(0.95f)  // Aumentado para mejor visibilidad
             .aspectRatio(1f)
             .border(thickBorder, MaterialTheme.colorScheme.outline)
             .background(MaterialTheme.colorScheme.background)
-            .padding(2.dp)
+            .padding(1.dp)
     ) {
         for (rowIndex in 0 until dimension) {
             Row(

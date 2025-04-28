@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -156,7 +157,7 @@ fun NumberButton(
 ) {
     Box(
         modifier = modifier
-            .aspectRatio(1f)
+            .sizeIn(maxWidth = 60.dp, maxHeight = 60.dp) // 👈 Limitar el tamaño máximo
             .padding(2.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)

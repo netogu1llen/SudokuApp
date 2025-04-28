@@ -3,10 +3,12 @@ package com.sudokuapp.domain.repository
 import com.sudokuapp.domain.model.Sudoku
 import com.sudokuapp.domain.model.SudokuDifficulty
 import com.sudokuapp.domain.model.SudokuSize
+import com.sudokuapp.domain.model.VerificationResult
 import kotlinx.coroutines.flow.Flow
 
 interface SudokuRepository {
     suspend fun generateSudoku(size: SudokuSize, difficulty: SudokuDifficulty): Result<Sudoku>
+    suspend fun verifySudokuWithApi(sudoku: Sudoku): Result<VerificationResult>
     suspend fun saveSudoku(sudoku: Sudoku)
     suspend fun getSudokuById(id: String): Sudoku?
     fun getAllSudokus(): Flow<List<Sudoku>>
